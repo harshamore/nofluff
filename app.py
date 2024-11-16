@@ -33,25 +33,30 @@ if user_input:
     # Append user's message to the conversation
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-    # Generate assistant's response
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=st.session_state.messages,
-        max_tokens=500,
-        temperature=0.7,
-    )
+    try:
+        # Generate assistant's response
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=st.session_state.messages,
+            max_tokens=500,
+            temperature=0.7,
+        )
 
-    assistant_reply = response.choices[0].message["content"]
+        assistant_reply = response.choices[0].message["content"]
 
-    # Append assistant's message to the conversation
-    st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
+        # Append assistant's message to the conversation
+        st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
 
-    # Display the conversation
-    for message in st.session_state.messages[1:]:  # Skip the system prompt
-        if message["role"] == "user":
-            st.markdown(f"**You:** {message['content']}")
-        elif message["role"] == "assistant":
-            st.markdown(f"**ESG Expert:** {message['content']}")
+        # Display the conversation
+        for message in st.session_state.messages[1:]:  # Skip the system prompt
+            if message["role"] == "user":
+                st.markdown(f"**You:** {message['content']}")
+            elif message["role"] == "assistant":
+                st.markdown(f"**ESG Expert:** {message['content']}")
+
+    except AttributeError as e:
+        st.error("An error occurred with the OpenAI API call.")
+        st.error(str(e))
 
     # Clear the input box after submission
     st.session_state.user_input = ""
