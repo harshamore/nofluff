@@ -35,7 +35,7 @@ if user_input:
 
     # Generate assistant's response
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         messages=st.session_state.messages,
         max_tokens=500,
         temperature=0.7,
