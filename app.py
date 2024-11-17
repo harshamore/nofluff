@@ -134,4 +134,4 @@ if st.sidebar.button("Clear Chat"):
 
 # Footer
 st.markdown("---")
-st.markdown("*ESG consultant on coke*")
+st.markdown("*ESG consultant on steriods*")
