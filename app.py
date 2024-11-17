@@ -1,62 +1,137 @@
 import streamlit as st
-import openai
+from openai import OpenAI
+import os
 
-# Set up OpenAI API key
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+# Page configuration
+st.set_page_config(
+    page_title="ESG Consulting Expert",
+    page_icon="🌍",
+    layout="wide"
+)
 
-# Define the system prompt
-system_prompt = """
-You are a highly experienced ESG consulting expert with years of experience in BCG, Bain, and McKinsey. You support users on:
-- ESG Risk and Opportunity Assessment
-- ESG Strategy Recommendations
-- ESG Performance Analytics
-- ESG Report Summarization
-- Benchmarking Reports
-- Compliance Checks
-- Forecasting and Simulations
+# Check for OpenAI API key in Streamlit secrets
+if "OPENAI_API_KEY" not in st.secrets:
+    st.error("Please set the OPENAI_API_KEY in your Streamlit secrets!")
+    st.stop()
 
-Provide clear, professional, and detailed responses to the user's queries. If you are unsure or need more information, ask clarifying questions to help the user articulate their needs better.
-"""
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# Initialize the session state for chat history
+# Initialize session states
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": system_prompt}]
+    st.session_state.messages = []
 
-st.title("🌿 ESG Consulting Expert Chatbot")
+# Main content
+st.title("🌍 ESG Consulting Expert")
+st.markdown("Your virtual ESG consultant with experience from top consulting firms")
 
-st.write("Welcome! I'm here to assist you with all your ESG consulting needs. How can I help you today?")
+# Sidebar content
+with st.sidebar:
+    st.markdown("### Areas of Expertise")
+    st.markdown("""
+    - ESG Risk & Opportunity Assessment
+    - Strategy Recommendations
+    - Performance Analytics
+    - Report Summarization
+    - Benchmarking Reports
+    - Compliance Checks
+    - Forecasting & Simulations
+    """)
+    
+    st.markdown("---")
+    st.markdown("### About")
+    st.markdown("""
+    This AI consultant combines expertise from:
+    - BCG
+    - Bain
+    - McKinsey
+    
+    For comprehensive ESG consulting support.
+    """)
 
-# User input
-user_input = st.text_input("Your question:", key="user_input")
+# System message defining the AI's role and capabilities
+system_message = """You are an expert ESG consultant with extensive experience from top consulting firms including BCG, Bain, and McKinsey. 
 
-if user_input:
-    # Append user's message to the conversation
-    st.session_state.messages.append({"role": "user", "content": user_input})
+Your expertise covers:
+1. ESG Risk and Opportunity Assessment
+2. ESG Strategy Recommendations
+3. ESG Performance Analytics
+4. ESG Report Summarization
+5. Benchmarking Reports
+6. Compliance Checks
+7. Forecasting and Simulations
 
-    try:
-        # Generate assistant's response
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=st.session_state.messages,
-            max_tokens=500,
-            temperature=0.7,
-        )
+Guidelines for your responses:
+- Provide specific, actionable insights based on industry best practices
+- If a query is unclear or lacks context, ask clarifying questions
+- Support recommendations with relevant frameworks and methodologies
+- Consider industry-specific nuances and regulatory requirements
+- When appropriate, suggest metrics and KPIs for tracking progress
+- If uncertain about specific details, ask for more information rather than making assumptions
+- Use structured approaches (e.g., matrices, frameworks) when applicable
+- Provide specific examples and case studies when relevant
+- Include quantitative metrics and benchmarks when possible
+- Suggest implementation timelines and resource requirements when appropriate
 
-        assistant_reply = response.choices[0].message["content"]
+Always maintain a professional yet approachable consulting tone.
 
-        # Append assistant's message to the conversation
-        st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
+If the user's query is unclear or lacks essential context, ask specific questions to better understand:
+1. Industry/sector
+2. Company size
+3. Geographic region
+4. Current ESG maturity level
+5. Specific challenges or goals
+6. Timeline and resource constraints"""
 
-        # Display the conversation
-        for message in st.session_state.messages[1:]:  # Skip the system prompt
-            if message["role"] == "user":
-                st.markdown(f"**You:** {message['content']}")
-            elif message["role"] == "assistant":
-                st.markdown(f"**ESG Expert:** {message['content']}")
+# Display chat messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-    except AttributeError as e:
-        st.error("An error occurred with the OpenAI API call.")
-        st.error(str(e))
+# Chat input
+if prompt := st.chat_input("What ESG-related questions can I help you with?"):
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    
+    # Display user message
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    
+    # Generate and display assistant response
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        full_response = ""
+        
+        try:
+            # Prepare messages including system message
+            messages = [
+                {"role": "system", "content": system_message}
+            ] + st.session_state.messages
+            
+            # Get streaming response from OpenAI
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[{"role": m["role"], "content": m["content"]} for m in messages],
+                stream=True
+            )
+            
+            for chunk in response:
+                if chunk.choices[0].delta.content is not None:
+                    full_response += chunk.choices[0].delta.content
+                    message_placeholder.markdown(full_response + "▌")
+            
+            message_placeholder.markdown(full_response)
+            
+            # Add assistant response to chat history
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
 
-    # Clear the input box after submission
-    st.session_state.user_input = ""
+# Clear chat button
+if st.sidebar.button("Clear Chat"):
+    st.session_state.messages = []
+    st.rerun()
+
+# Footer
+st.markdown("---")
+st.markdown("*Built with Streamlit and OpenAI GPT-4*")
