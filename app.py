@@ -21,7 +21,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # Main content
-st.title("🌍 ESG Consulting Expert")
+st.title("🌍 No Fluff Consulting")
 st.markdown("Your virtual ESG consultant with experience from top consulting firms")
 
 # Sidebar content
