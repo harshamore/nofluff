@@ -4,7 +4,7 @@ import os
 
 # Page configuration
 st.set_page_config(
-    page_title="ESG Consulting Expert",
+    page_title="No Fluff Consulting ",
     page_icon="🌍",
     layout="wide"
 )
@@ -134,4 +134,4 @@ if st.sidebar.button("Clear Chat"):
 
 # Footer
 st.markdown("---")
-st.markdown("*Built with Streamlit and OpenAI GPT-4*")
+st.markdown("*ESG consultant on coke*")
